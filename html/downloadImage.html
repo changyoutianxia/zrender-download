@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>downloadImage</title>
+</head>
+<body>
+<a onclick="downImage();">下载</a>
+<div id="demoOne" style="width: 4000px;height: 8000px;"></div>
+<div id="demoTwo" style="width: 4000px;height: 8000px;"></div>
+<script type="text/javascript" src="../js/zrender/zrender.js"></script>
+<script type="text/javascript">
+    let zrCompaint = new Array();
+    let demoOne = window.document.getElementById("demoOne");
+    let demoTwo = window.document.getElementById("demoTwo");
+    let zrList = new Array();
+    var zrOne = zrender.init(demoOne);
+    var zrTwo = zrender.init(demoTwo);
+    let currentZr = new Array();
+    var circleOne = new zrender.Circle({
+        shape: {
+            cx: 150,
+            cy: 50,
+            r: 40
+        },
+        style: {
+            fill: 'none',
+            stroke: '#F00'
+        }
+    });
+    zrOne.add(circleOne);
+    currentZr.push(circleOne);
+    zrCompaint.push(currentZr);
+    var circleTwo = new zrender.Circle({
+        shape: {
+            cx: 100,
+            cy: 50,
+            r: 30
+        },
+        style: {
+            fill: 'none',
+            stroke: '#F00'
+        }
+    });
+    zrTwo.add(circleTwo);
+    let nextZr = new Array();
+    nextZr.push(circleTwo);
+    zrCompaint.push(nextZr);
+
+    zrList.push(zrOne);
+    zrList.push(zrTwo);
+
+    //将base64转换为文件对象
+    function dataURLtoFile(dataurl) {
+        var base64Arr = dataurl.split(',');
+        var imgtype = '';
+        var base64String = '';
+        if (base64Arr.length > 1) {
+            //如果是图片base64，去掉头信息
+            base64String = base64Arr[1];
+            imgtype = base64Arr[0].substring(base64Arr[0].indexOf(':') + 1, base64Arr[0].indexOf(';'));
+        }
+        // 将base64解码
+        var bytes = atob(base64String);
+        //var bytes = base64;
+        var bytesCode = new ArrayBuffer(bytes.length);
+        // 转换为类型化数组
+        var byteArray = new Uint8Array(bytesCode);
+
+        // 将base64转换为ascii码
+        for (var i = 0; i < bytes.length; i++) {
+            byteArray[i] = bytes.charCodeAt(i);
+        }
+
+        // 生成Blob对象（文件对象）
+        return new Blob([bytesCode], {type: imgtype});
+    }
+
+    function downImage() {
+        zrCompaint.forEach((zr, index) => {
+            let htmlDivElement = document.createElement("div");
+            htmlDivElement.setAttribute("height", "8000");
+            htmlDivElement.setAttribute("width", "8000");
+            let tempZrender = zrender.init(htmlDivElement, {width: 8000, height: 8000});
+            zr.forEach(function (node) {
+                tempZrender.add(node);
+            });
+            myCallback("flag", index, tempZrender);
+        });
+    }
+
+    function myCallback(direction, index, tempZrender) {
+        tempZrender.painter.getRenderedCanvas({
+            backgroundColor: "#fff"
+        }).toBlob(function (blob) {
+            var url = window.URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.setAttribute("download", direction + "_" + index);
+            link.href = url;
+            document.body.appendChild(link);//添加到页面中，为兼容Firefox浏览器
+            link.click();
+            tempZrender.clear();
+            zrender.dispose(tempZrender);
+            document.body.removeChild(link);//从页面移除
+        }, "image/png");
+    }
+
+
+</script>
+</body>
+</html>
